@@ -1,3 +1,5 @@
+# DeepSeek R1模型Lora微调
+
 ## down load model weights and dataset
 ```bash
 python hf_download.py --model deepseek-ai/DeepSeek-R1-Distill-Qwen-32B --save_dir ./models

@@ -1,5 +1,5 @@
 # Prompt template - for finetuning
-train_prompt_en: str= """
+train_prompt_en: str = """
 Below is an instruction that describes a task, paired with an input that provides further context.
 Write a response that appropriately completes the request.
 Before answering, think carefully about the question and create a step-by-step chain of thoughts to ensure a logical and accurate response.
@@ -18,7 +18,7 @@ Please answer the following medical question.
 {}
 """
 
-train_prompt_zh: str= """
+train_prompt_zh: str = """
 以下是一条描述任务的指令，以及进一步的背景信息。
 请根据要求给出恰当的回答。
 在回答之前，请仔细思考问题，并生成一个循序渐进的思维链，从而确保回答合乎逻辑且准确无误。
@@ -37,7 +37,7 @@ train_prompt_zh: str= """
 {}
 """
 
-medical_chat_prompt_en: str= """
+medical_chat_prompt_en: str = """
 Below is an instruction that describes a task, paired with an input that provides further context.
 Write a response that appropriately completes the request.
 Before answering, think carefully about the question and create a step-by-step chain of thoughts to ensure a logical and accurate response.
@@ -54,7 +54,7 @@ Please answer the following medical question.
 {}
 """
 
-medical_chat_prompt_zh: str= """
+medical_chat_prompt_zh: str = """
 以下是一条描述任务的指令，以及进一步的背景信息。
 请根据要求给出恰当的回答。
 在回答之前，请仔细思考问题，并生成一个循序渐进的思维链，从而确保回答合乎逻辑且准确无误。
@@ -71,7 +71,7 @@ medical_chat_prompt_zh: str= """
 {}
 """
 
-chat_prompt_en: str= """
+chat_prompt_en: str = """
 Below is an instruction that describes a task, paired with an input that provides further context.
 Write a response that appropriately completes the request.
 Before answering, think carefully about the question and create a step-by-step chain of thoughts to ensure a logical and accurate response.
@@ -88,7 +88,7 @@ Please answer the following question.
 {}
 """
 
-chat_prompt_zh: str= """
+chat_prompt_zh: str = """
 以下是一条描述任务的指令，以及进一步的背景信息。
 请根据要求给出恰当的回答。
 在回答之前，请仔细思考问题，并生成一个循序渐进的思维链，从而确保回答合乎逻辑且准确无误。
@@ -104,3 +104,14 @@ chat_prompt_zh: str= """
 <think>
 {}
 """
+
+CHAT_PROMPTS_MAP = {
+    "en": {
+        "medical": medical_chat_prompt_zh,
+        "chat": chat_prompt_zh,
+    },
+    "zh": {
+        "medical": medical_chat_prompt_en,
+        "chat": chat_prompt_en,
+    }
+}

@@ -1,5 +1,7 @@
-from typing import Literal
+from typing import Literal, Dict
 from dataclasses import dataclass
+
+import torch
 
 
 @dataclass
@@ -67,3 +69,11 @@ class ChatConfig:
 @dataclass
 class APIKeyConfig:
     wnb_api_key: str = "7c7f7c4dd6ef2c2b1ee9c005901a1b528ba83fe8"
+
+
+TORCH_TYPE_MAP: Dict = {
+    "bfloat16": torch.bfloat16,
+    "float16": torch.float16,
+    "float32": torch.float32,
+    "int8": torch.int8
+}

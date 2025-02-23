@@ -4,7 +4,7 @@ import torch
 from peft import PeftModel
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-from utils import TORCH_TYPE_MAP
+from config.config import TORCH_TYPE_MAP
 
 
 def main(
