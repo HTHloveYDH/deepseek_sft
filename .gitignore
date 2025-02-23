@@ -1,0 +1,16 @@
+# filename .gitignore
+
+# ignore directory
+wandb/
+data/
+models/
+outputs/
+__pycache__/
+
+# ignore all the files under the config/ whose extensions are .sqlite3
+/config/*.yaml
+
+# ignore all the files whose extensions as .tmp
+*.tmp
+
+# .gitignore

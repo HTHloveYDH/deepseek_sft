@@ -1,0 +1,24 @@
+{
+    "data_dir": "./data/FreedomIntelligence--medical-o1-reasoning-SFT",
+    "model_dir": "./models/DeepSeek-R1-Distill-Qwen-32B",
+    "save_model_dir": "./models/DeepSeek-R1-Distill-Qwen-32B-Medical",
+    "save_quant_model_dir": "./models/DeepSeek-R1-Distill-Qwen-32B-Medical-Quant",
+    "save_lora_adapter": true,
+    "save_method": "merged_16bit",
+
+    "quantization_method": "q4_k_m",
+
+    "max_seq_length": 2048,
+    "load_in_4bit": true,
+
+    "per_device_train_batch_size": 2,
+    "gradient_accumulation_steps":8,
+    "num_train_epochs":5,
+    "warmup_steps":5,
+    "learning_rate":2e-4,
+
+    "lora_rank": 16,
+    "lora_alpha": 16,
+
+    "resume_from_checkpoint": false
+}
