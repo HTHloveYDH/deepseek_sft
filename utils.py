@@ -2,11 +2,20 @@ import json
 import re
 from typing import Dict, List, Tuple, Union
 
+import torch
+
 from config.config import TrainConfig, ChatConfig, APIKeyConfig
 from prompts import train_prompt_en, train_prompt_zh
 
 # from typing_extensions import TypedDict
 
+
+TORCH_TYPE_MAP: Dict = {
+    "bfloat16": torch.bfloat16,
+    "float16": torch.float16,
+    "float32": torch.float32,
+    "int8": torch.int8
+}
 
 def load_config(encoding: str = "utf-8") -> Tuple[TrainConfig, APIKeyConfig]:
     with open("./config/train_config.json", "r", encoding=encoding) as f1, open(

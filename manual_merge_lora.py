@@ -4,10 +4,13 @@ import torch
 from peft import PeftModel
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
+from utils import TORCH_TYPE_MAP
+
 
 def main(
     model_dir: str,
     lora_adapter_dir: str,
+    torch_dtype: str, 
     save_model_dir: str,
     save_quant_model_dir:str,
     save_lora_adapter: bool,
@@ -17,8 +20,9 @@ def main(
     # load base model and tokenizer
     base_model = AutoModelForCausalLM.from_pretrained(
         model_dir,
-        torch_dtype=torch.bfloat16,
+        torch_dtype=TORCH_TYPE_MAP.get(torch_dtype, torch.bfloat16),
         low_cpu_mem_usage=True,
+        trust_remote_code=True,
         device_map="cuda",
     )
     tokenizer = AutoTokenizer.from_pretrained(model_dir)
@@ -63,6 +67,13 @@ if __name__ == "__main__":
         type=str,
         required=True,
         help="Directory containing the LoRA adapter",
+    )
+
+    parser.add_argument(
+        "--torch_dtype",
+        type=str,
+        required=True,
+        help="torch type for loading model",
     )
 
     parser.add_argument(
