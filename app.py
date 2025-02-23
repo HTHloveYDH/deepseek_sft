@@ -7,6 +7,7 @@ import streamlit as st
 from prompts import CHAT_PROMPTS_MAP
 from utils import has_chinese_char
 
+
 # 设置远程服务器的地址
 REMOTE_SERVER_URL: str = (
     "http://localhost:8000/v1/chat/completions"  # 替换为你的服务器地址和端口
@@ -17,6 +18,9 @@ MODE_MAP: Dict = {
     1: "chat",
 }
 prompt: str = ""
+cot_finished: bool = False
+new_text: str = ""
+generated_text: str = ""
 
 # Streamlit页面配置
 st.set_page_config(
@@ -46,9 +50,16 @@ ai_assistant_mode: int = st.sidebar.radio(
 intent: str = MODE_MAP.get(ai_assistant_mode, "medical")
 
 # 显示选择盒2
-chat_round_mode: int = st.sidebar.radio(
+chat_round_mode: str = st.sidebar.radio(
     "对话模式：",
     options=["单轮对话", "多轮对话"],
+    index=0,  # 默认选中第一个选项
+)
+
+# 显示选择盒3
+show_cot: str = st.sidebar.radio(
+    "显示思考过程：",
+    options=["是", "否"],
     index=0,  # 默认选中第一个选项
 )
 
@@ -113,9 +124,9 @@ if user_input := st.chat_input("请输入您的问题"):
         request_data = {
             "model": CHAT_MODEL,
             "messages": (
-                st.session_state.messages[:-1] + [prompt]
-                if chat_round_mode == 1
-                else [prompt]
+                st.session_state.messages[:-1] + [{"role": "user", "content": prompt}]
+                if chat_round_mode == "多轮对话"
+                else [{"role": "user", "content": prompt}]
             ),  # 不会改变st.session_state.messages的内容
             "stream": True,
         }
@@ -124,15 +135,24 @@ if user_input := st.chat_input("请输入您的问题"):
         response = requests.post(REMOTE_SERVER_URL, json=request_data, stream=True)
 
         # 逐行接收流式响应
+        cot_finished = False
         for line in response.iter_lines():
             if line:
                 decoded_line = line.decode("utf-8")
                 try:
-                    chunk = json.loads(decoded_line)
+                    chunk = json.loads(decoded_line[6:])  # 去除开头的"data: "部分
                     if "content" in chunk.get("choices", [{}])[0].get("delta", {}):
                         new_text = chunk["choices"][0]["delta"]["content"]
-                        generated_text += new_text
-                        message_placeholder.markdown(generated_text)
+                        # 判断思考过程是否结束
+                        if new_text == "</think>":
+                            cot_finished = True
+                            if show_cot == "是":
+                                new_text = "\n--------------------------------------------------以上是思考过程---------------------------------------------------------"
+                            else:
+                                new_text = ""
+                        if show_cot == "是" or cot_finished:
+                            generated_text += new_text
+                            message_placeholder.markdown(generated_text)
                 except json.JSONDecodeError:
                     pass
 

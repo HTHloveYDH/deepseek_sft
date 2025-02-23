@@ -3,6 +3,7 @@ import json
 
 import requests
 import streamlit as st
+
 from prompts import medical_chat_prompt_en, medical_chat_prompt_zh, chat_prompt_en, chat_prompt_zh
 from utils import has_chinese_char
 
