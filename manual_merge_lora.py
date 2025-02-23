@@ -117,6 +117,7 @@ if __name__ == "__main__":
     main(
         model_dir=args.model_dir,
         lora_adapter_dir=args.lora_adapter_dir,
+        torch_dtype=args.torch_dtype,
         save_model_dir=args.save_model_dir,
         save_quant_model_dir=args.save_quant_model_dir,
         save_lora_adapter=args.save_lora_adapter,

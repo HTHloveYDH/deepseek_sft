@@ -20,5 +20,5 @@
     "lora_rank": 16,
     "lora_alpha": 16,
 
-    "resume_from_checkpoint": false
+    "resume_from_checkpoint": true
 }
