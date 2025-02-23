@@ -40,7 +40,7 @@ def main(
         merged_model.save_pretrained_merged(
             save_model_dir,
             tokenizer,
-            max_shard_size="5GB",        # 分片存储防止大文件问题
+            max_shard_size="8GB",        # 分片存储防止大文件问题
             save_method=save_method,
         )
 
