@@ -13,7 +13,7 @@ REMOTE_SERVER_URL: str = (
 )
 CHAT_MODEL: str = "./models/DeepSeek-R1-Distill-Qwen-32B"
 MODE_MAP: Dict = {
-    0: "medical_chat",
+    0: "medical",
     1: "chat",
 }
 prompt: str = ""
@@ -43,7 +43,7 @@ ai_assistant_mode: int = st.sidebar.radio(
     options=["医学", "闲聊"],
     index=0,  # 默认选中第一个选项
 )
-intent: str = MODE_MAP.get(ai_assistant_mode, "medical_chat")
+intent: str = MODE_MAP.get(ai_assistant_mode, "medical")
 
 # 显示选择盒2
 chat_round_mode: int = st.sidebar.radio(
@@ -90,14 +90,14 @@ if user_input := st.chat_input("请输入您的问题"):
         st.markdown(user_input)
     if has_chinese_char(user_input):
         prompt = (
-            CHAT_PROMPTS_MAP.get("zh", {"medical_chat": medical_chat_prompt_zh})
-            .get(intent, medical_chat_prompt_zh)
+            CHAT_PROMPTS_MAP.get("zh", {"medical": CHAT_PROMPTS_MAP["zh"]["medical"]})
+            .get(intent, CHAT_PROMPTS_MAP["zh"]["medical"])
             .format(user_input, "")
         )
     else:
         prompt = (
-            CHAT_PROMPTS_MAP.get("en", {"medical_chat": medical_chat_prompt_en})
-            .get(intent, medical_chat_prompt_en)
+            CHAT_PROMPTS_MAP.get("en", {"medical": CHAT_PROMPTS_MAP["en"]["medical"]})
+            .get(intent, CHAT_PROMPTS_MAP["en"]["medical"])
             .format(user_input, "")
         )
     st.session_state.messages.append(
@@ -121,7 +121,7 @@ if user_input := st.chat_input("请输入您的问题"):
         }
 
         # 发送流式请求
-        response = requests.post(VLLM_API_URL, json=request_data, stream=True)
+        response = requests.post(REMOTE_SERVER_URL, json=request_data, stream=True)
 
         # 逐行接收流式响应
         for line in response.iter_lines():

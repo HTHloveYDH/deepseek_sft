@@ -18,6 +18,7 @@ Please answer the following medical question.
 {}
 """
 
+
 train_prompt_zh: str = """
 以下是一条描述任务的指令，以及进一步的背景信息。
 请根据要求给出恰当的回答。
@@ -37,6 +38,7 @@ train_prompt_zh: str = """
 {}
 """
 
+
 medical_chat_prompt_en: str = """
 Below is an instruction that describes a task, paired with an input that provides further context.
 Write a response that appropriately completes the request.
@@ -53,6 +55,7 @@ Please answer the following medical question.
 <think>
 {}
 """
+
 
 medical_chat_prompt_zh: str = """
 以下是一条描述任务的指令，以及进一步的背景信息。
@@ -71,6 +74,7 @@ medical_chat_prompt_zh: str = """
 {}
 """
 
+
 chat_prompt_en: str = """
 Below is an instruction that describes a task, paired with an input that provides further context.
 Write a response that appropriately completes the request.
@@ -88,6 +92,7 @@ Please answer the following question.
 {}
 """
 
+
 chat_prompt_zh: str = """
 以下是一条描述任务的指令，以及进一步的背景信息。
 请根据要求给出恰当的回答。
@@ -104,6 +109,7 @@ chat_prompt_zh: str = """
 <think>
 {}
 """
+
 
 CHAT_PROMPTS_MAP = {
     "en": {
