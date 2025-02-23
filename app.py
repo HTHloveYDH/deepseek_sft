@@ -14,8 +14,8 @@ REMOTE_SERVER_URL: str = (
 )
 CHAT_MODEL: str = "./models/DeepSeek-R1-Distill-Qwen-32B"
 MODE_MAP: Dict = {
-    0: "medical",
-    1: "chat",
+    "医学": "medical",
+    "闲聊": "chat",
 }
 prompt: str = ""
 cot_finished: bool = False
@@ -42,7 +42,7 @@ for message in st.session_state.messages[1:]:
 st.sidebar.header("设置")
 
 # 显示选择盒1
-ai_assistant_mode: int = st.sidebar.radio(
+ai_assistant_mode: str = st.sidebar.radio(
     "AI助手模式：",
     options=["医学", "闲聊"],
     index=0,  # 默认选中第一个选项
