@@ -7,10 +7,14 @@ from peft import PeftModel
 from unsloth import FastLanguageModel
 from transformers import PreTrainedModel
 
+from constants import TORCH_TYPE_MAP
+
 
 def main(
     model_dir: str,
     lora_adapter_dir: str,
+    max_seq_length: int,
+    torch_dtype: str,
     save_model_dir: str,
 ):
     # 确保目录存在
@@ -19,7 +23,8 @@ def main(
     print("加载基础模型和LoRA适配器...")
     model, tokenizer = FastLanguageModel.from_pretrained(
         model_name=model_dir,
-        max_seq_length=2048,
+        max_seq_length=max_seq_length,
+        dtype=TORCH_TYPE_MAP.get(torch_dtype, None),
         load_in_4bit=True,
     )
 
@@ -60,6 +65,21 @@ if __name__ == "__main__":
     )
     
     parser.add_argument(
+        "--max_seq_length",
+        type=int,
+        required=True,
+        help="max input token sequence length",
+    )
+
+    parser.add_argument(
+        "--torch_dtype",
+        type=str,
+        required=True,
+        choices=["bfloat16", "float16", "float32", "int8", "auto"],
+        help="torch type for loading model",
+    )
+
+    parser.add_argument(
         "--save_model_dir",
         type=str,
         required=True,
@@ -71,5 +91,7 @@ if __name__ == "__main__":
     main(
         model_dir=args.model_dir,
         lora_adapter_dir=args.lora_adapter_dir,
+        max_seq_length=args.max_seq_length,
+        torch_dtype=args.torch_dtype,
         save_model_dir=args.save_model_dir,
     )
