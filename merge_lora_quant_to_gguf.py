@@ -13,12 +13,10 @@ def main(
     lora_adapter_dir: str,
     max_seq_length: int,
     torch_dtype: str,
-    save_model_dir: str,
     save_quant_model_dir: str,
     quantization_method: str,
 ):
     # 确保目录存在
-    os.makedirs(save_model_dir, exist_ok=True)
     os.makedirs(save_quant_model_dir, exist_ok=True)
 
     print("加载基础模型和LoRA适配器...")
@@ -26,7 +24,7 @@ def main(
         model_name=model_dir,
         max_seq_length=max_seq_length,
         dtype=TORCH_TYPE_MAP.get(torch_dtype, None),
-        load_in_4bit=True,
+        load_in_4bit=False,
     )
 
     lora_model = PeftModel.from_pretrained(
@@ -86,13 +84,6 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
-        "--save_model_dir",
-        type=str,
-        required=True,
-        help="Directory to save the merged model",
-    )
-
-    parser.add_argument(
         "--save_quant_model_dir",
         type=str,
         required=True,
@@ -114,7 +105,6 @@ if __name__ == "__main__":
         lora_adapter_dir=args.lora_adapter_dir,
         max_seq_length=args.max_seq_length,
         torch_dtype=args.torch_dtype,
-        save_model_dir=args.save_model_dir,
         save_quant_model_dir=args.save_quant_model_dir,
         quantization_method=args.quantization_method,
     )

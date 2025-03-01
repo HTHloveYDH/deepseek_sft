@@ -44,7 +44,21 @@ curl http://localhost:9000/v1/chat/completions   -H "Content-Type: application/j
   }'
 ```
 
-3. start web-ui
+## start llama.cpp server
+1. start server
+```bash
+./llama-server -m path/to/your/gguf_model.gguf --port 8000
+```
+
+2. access remote server by following command
+```bash
+curl http://localhost:9000/v1/chat/completions   -H "Content-Type: application/json"   -d '{
+    "model": "./models/DeepSeek-R1-Distill-Qwen-32B",
+    "messages": [{"role": "user", "content": "Hello! What is your name?"}]
+  }'
+
+
+## start web-ui
 ```bash
 streamlit run app.py
 ```
@@ -55,4 +69,15 @@ streamlit run app_demo.py
 
 4. open the webpage and input your question
 
+## merge lora
+```bash
+python ./merge_lora.py --model_dir path/to/your/base_model_folder --lora_adapter_dir path/to/your/lora_adapter_folder --max_seq_length 32768 --torch_dtype auto --save_model_dir /path/to/your/lora_mergerd_model_folder --save_method merged_16bit
+```
+
 ## quant model and deploy
+### clone and compile llama.cpp
+
+### run following command
+```bash
+python ./merge_lora_quant_to_gguf.py --model_dir path/to/your/base_model_folder --lora_adapter_dir path/to/your/lora_adapter_folder --max_seq_length 32768 --torch_dtype auto --save_quant_model_dir /path/to/your/lora_mergerd_quant_model_folder --quantization_method q4_k_m
+```

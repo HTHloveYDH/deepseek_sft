@@ -16,6 +16,7 @@ def main(
     max_seq_length: int,
     torch_dtype: str,
     save_model_dir: str,
+    save_method: str
 ):
     # 确保目录存在
     os.makedirs(save_model_dir, exist_ok=True)
@@ -25,7 +26,7 @@ def main(
         model_name=model_dir,
         max_seq_length=max_seq_length,
         dtype=TORCH_TYPE_MAP.get(torch_dtype, None),
-        load_in_4bit=True,
+        load_in_4bit=False,
     )
 
     lora_model = PeftModel.from_pretrained(
@@ -40,7 +41,7 @@ def main(
     print(f"保存合并模型到 {save_model_dir}...")
     # 使用标准的transformers保存方法而不是unsloth的方法
     if isinstance(merged_model, PreTrainedModel):
-        merged_model.save_pretrained(save_model_dir, safe_serialization=True)
+        merged_model.save_pretrained(save_model_dir, save_method=save_method, safe_serialization=True)
         tokenizer.save_pretrained(save_model_dir)
         print("模型保存成功!")
     else:
@@ -85,6 +86,14 @@ if __name__ == "__main__":
         required=True,
         help="Directory to save the merged model",
     )
+
+    parser.add_argument(
+        "--save_method",
+        type=str,
+        required=True,
+        chioces=["merged_4bit", "merged_16bit", "lora"],
+        help="method to save the merged model",
+    )
     
     args = parser.parse_args()
     
@@ -94,4 +103,5 @@ if __name__ == "__main__":
         max_seq_length=args.max_seq_length,
         torch_dtype=args.torch_dtype,
         save_model_dir=args.save_model_dir,
+        save_method=args.save_method
     )
