@@ -74,7 +74,7 @@ open the webpage and input your question
 python ./merge_lora.py --model_dir path/to/your/base_model_folder --lora_adapter_dir path/to/your/lora_adapter_folder --max_seq_length 32768 --torch_dtype auto --save_model_dir /path/to/your/lora_mergerd_model_folder --save_method merged_16bit
 ```
 
-## quant model and deploy
+## merge lora, quantize and deploy
 ### clone and compile llama.cpp
 
 ### run following command
