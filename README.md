@@ -56,7 +56,7 @@ curl http://localhost:9000/v1/chat/completions   -H "Content-Type: application/j
     "model": "./models/DeepSeek-R1-Distill-Qwen-32B",
     "messages": [{"role": "user", "content": "Hello! What is your name?"}]
   }'
-
+```
 
 ## start web-ui
 ```bash
