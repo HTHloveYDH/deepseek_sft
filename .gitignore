@@ -8,6 +8,7 @@ outputs/
 __pycache__/
 unsloth_compiled_cache/
 .ipynb_checkpoints/
+_unsloth_temporary_saved_buffers
 
 # ignore all the files under the config/ whose extensions are .sqlite3
 /config/*.yaml
