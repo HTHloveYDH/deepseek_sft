@@ -76,6 +76,33 @@ python ./merge_lora.py --model_dir path/to/your/base_model_folder --lora_adapter
 
 ## merge lora, quantize and deploy
 ### clone and compile llama.cpp
+```bash
+git clone https://github.com/ggml-org/llama.cpp
+```
+#### CPU Build
+Build llama.cpp using CMake:
+```bash
+cmake -B build
+cmake --build build --config Release
+```
+- For faster compilation, add the -j argument to run multiple jobs in parallel, or use a generator that does this automatically such as Ninja. For example, cmake --build build --config Release -j 8 will run 8 jobs in parallel.
+
+- For faster-repeated compilation, install [ccache](https://ccache.dev/)
+
+#### CUDA Build
+Plz install [CUDA](https://developer.nvidia.com/cuda-toolkit) before you begin building llama.cpp
+```bash
+cmake -B build -DGGML_CUDA=ON
+cmake --build build --config Release
+```
+#### Move the compiled bin file
+```bash
+cd build
+mv ./bin/llama-quantize ../
+mv ./bin/llama-server ../
+```
+
+**If you encounter any error in the build procedure, please reference the official doc [llama.cpp_build](https://github.com/ggml-org/llama.cpp/blob/master/docs/build.md)**
 
 ### run following command
 ```bash
