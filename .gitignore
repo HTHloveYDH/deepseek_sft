@@ -6,6 +6,8 @@ data/
 models/
 outputs/
 __pycache__/
+unsloth_compiled_cache/
+.ipynb_checkpoints/
 
 # ignore all the files under the config/ whose extensions are .sqlite3
 /config/*.yaml

@@ -73,27 +73,9 @@ top_p: float = st.sidebar.slider(
     "采样概率", min_value=0.0, max_value=1.0, value=0.9, step=0.05  # 默认值
 )
 
-# 显示文件上传框
-uploaded_file = st.file_uploader(
-    "请选择您的文件",
-    type=["txt", "csv", "pdf", "docx", "xlsx", "pptx"],
-    help="支持文本文件、CSV文件或PDF文件",
-)  # 上传文件
-# 显示上传按钮
-upload_button = st.button("上传文件")
-if upload_button and uploaded_file:
-    st.header("已上传文件")
-    if uploaded_file.name.endswith(".txt") or uploaded_file.name.endswith(".csv"):
-        # file_content = uploaded_file.read().decode("utf-8")  # 读取文本或CSV文件
-        pass
-    elif uploaded_file.name.endswith(".pdf"):
-        # st.write("PDF文件无法直接显示内容，请使用支持PDF的工具查看。")
-        pass
-    else:
-        st.write("暂不支持该文件类型，无法处理。")
-    st.write("文件名：", uploaded_file.name)
-elif upload_button and not uploaded_file:
-    st.warning("请先选择至少一个文件再点击上传文件按钮")
+# 在机器人位置弹出默认的打招呼用户
+with st.chat_message("assistant"):
+    st.write("我是您的AI助手，请问有什么可以帮到您？")
 
 if user_input := st.chat_input("请输入您的问题"):
     # 用户输入
@@ -162,14 +144,37 @@ if user_input := st.chat_input("请输入您的问题"):
         )
 
 # 添加一些说明
-st.markdown(
-    """
-### 使用说明
-- 输入您的问题后，点击"发送"按钮。
-- AI助手的回答结果将显示在下方。
-- 如果遇到问题，请检查远程服务器是否正常运行。
-"""
-)
+# st.markdown(
+#     """
+# ### 使用说明
+# - 输入您的问题后，点击"发送"按钮。
+# - AI助手的回答结果将显示在下方。
+# - 如果遇到问题，请检查远程服务器是否正常运行。
+# """
+# )
+
+# 显示上传按钮
+upload_button = st.button("上传文件")
+if upload_button:
+    # 显示文件上传框
+    uploaded_file = st.file_uploader(
+        "请选择您的文件",
+        type=["txt", "csv", "pdf", "docx", "xlsx", "pptx"],
+        help="支持文本文件、CSV文件或PDF文件",
+    )  # 上传文件
+    if uploaded_file:
+        st.header("已上传文件")
+        if uploaded_file.name.endswith(".txt") or uploaded_file.name.endswith(".csv"):
+            # file_content = uploaded_file.read().decode("utf-8")  # 读取文本或CSV文件
+            pass
+        elif uploaded_file.name.endswith(".pdf"):
+            # st.write("PDF文件无法直接显示内容，请使用支持PDF的工具查看。")
+            pass
+        else:
+            st.write("暂不支持该文件类型，无法处理。")
+        st.write("文件名：", uploaded_file.name)
+    elif upload_button and not uploaded_file:
+        st.warning("请先选择至少一个文件再点击上传文件按钮")
 
 # 显示清空聊天历史按钮
 clear_button = st.button("清空聊天")  # 清空聊天历史
