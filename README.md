@@ -67,7 +67,7 @@ you can also start simple web-ui by following command:
 streamlit run app_demo.py
 ```
 
-4. open the webpage and input your question
+open the webpage and input your question
 
 ## merge lora
 ```bash
