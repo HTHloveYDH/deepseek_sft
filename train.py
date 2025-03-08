@@ -35,6 +35,7 @@ def main():
         model_name=train_config.model_dir,
         max_seq_length=train_config.max_seq_length,
         dtype=dtype,
+        load_in_8bit=train_config.load_in_8bit,
         load_in_4bit=train_config.load_in_4bit,
         token=None,
     )

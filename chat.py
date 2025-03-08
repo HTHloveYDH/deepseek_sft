@@ -17,6 +17,7 @@ def main():
         model_name=chat_config.model_dir,
         max_seq_length=chat_config.max_seq_length,
         dtype=dtype,
+        load_in_8bit=chat_config.load_in_8bit,
         load_in_4bit=chat_config.load_in_4bit,
         token=None,
     )

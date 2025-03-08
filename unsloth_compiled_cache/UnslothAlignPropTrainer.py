@@ -120,7 +120,7 @@ class UnslothAlignPropConfig(AlignPropConfig):
     )
     def __init__(
         self,
-        exp_name = 'merge_lora_quant_to_gguf',
+        exp_name = 'chat',
         run_name = '',
         seed = 3407,
         log_with = None,

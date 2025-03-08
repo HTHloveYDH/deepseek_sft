@@ -40,6 +40,7 @@ class TrainConfig:  # total=True as default
     ] = "q4_k_m"
 
     max_seq_length: int = 4096
+    load_in_8bit: bool = False
     load_in_4bit: bool = False
 
     per_device_train_batch_size: int = 8
@@ -59,6 +60,7 @@ class TrainConfig:  # total=True as default
 class ChatConfig:
     model_dir: str
     max_seq_length: int = 4096
+    load_in_8bit: bool = False
     load_in_4bit: bool = False
 
     user_input: str = "Hello, who are you?"
