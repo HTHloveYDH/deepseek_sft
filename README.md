@@ -39,7 +39,7 @@ python chat.py
 ## start vllm server
 1. start server
 ```bash
-vllm serve ./models/DeepSeek-R1-Distill-Qwen-32B --tensor-parallel-size 1 --max-model-len 32768 --enforce-eager
+vllm serve ../models/DeepSeek-R1-Distill-Qwen-32B --tensor-parallel-size 1 --max-model-len 32768 --enforce-eager
 ```
 
 2. access remote server by following command
