@@ -1,7 +1,7 @@
 # Library imports
 from unsloth import FastLanguageModel, is_bfloat16_supported
 
-from prompts import medical_chat_prompt_en, medical_chat_prompt_zh
+from prompts import chat_prompt_en, chat_prompt_zh
 from utils import formatting_prompts_func, has_chinese_char, load_config
 
 
