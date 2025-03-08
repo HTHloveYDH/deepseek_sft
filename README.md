@@ -39,13 +39,13 @@ python chat.py
 ## start vllm server
 1. start server
 ```bash
-vllm serve ../models/DeepSeek-R1-Distill-Qwen-32B --tensor-parallel-size 1 --max-model-len 32768 --enforce-eager
+vllm serve /path/to/DeepSeek-R1-Distill-Qwen-32B --tensor-parallel-size 1 --max-model-len 32768 --enforce-eager
 ```
 
 2. access remote server by following command
 ```bash
-curl http://localhost:9000/v1/chat/completions   -H "Content-Type: application/json"   -d '{
-    "model": "./models/DeepSeek-R1-Distill-Qwen-32B",
+curl http://localhost:9000/v1/chat/completions -H "Content-Type: application/json" -d '{
+    "model": "/path/to/DeepSeek-R1-Distill-Qwen-32B",
     "messages": [{"role": "user", "content": "Hello! What is your name?"}]
   }'
 ```
@@ -59,7 +59,7 @@ curl http://localhost:9000/v1/chat/completions   -H "Content-Type: application/j
 2. access remote server by following command
 ```bash
 curl http://localhost:9000/v1/chat/completions   -H "Content-Type: application/json"   -d '{
-    "model": "./models/DeepSeek-R1-Distill-Qwen-32B",
+    "model": "path/to/your/gguf_model.gguf",
     "messages": [{"role": "user", "content": "Hello! What is your name?"}]
   }'
 ```

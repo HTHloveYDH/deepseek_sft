@@ -32,7 +32,7 @@ if st.button("发送"):
     if user_input.strip():
         # 构造请求数据
         request_data = {
-            "model": "./models/DeepSeek-R1-Distill-Qwen-32B",
+            "model": "../models/DeepSeek-R1-Distill-Qwen-32B",
             "messages": [{"role": "user", "content": prompt}],
         }
 

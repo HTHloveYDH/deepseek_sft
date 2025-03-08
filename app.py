@@ -12,7 +12,7 @@ from utils import has_chinese_char
 REMOTE_SERVER_URL: str = (
     "http://localhost:8000/v1/chat/completions"  # 替换为你的服务器地址和端口
 )
-CHAT_MODEL: str = "./models/DeepSeek-R1-Distill-Qwen-32B"
+CHAT_MODEL: str = "../models/DeepSeek-R1-Distill-Qwen-32B"
 MODE_MAP: Dict = {
     "医学": "medical",
     "闲聊": "chat",
