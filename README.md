@@ -30,6 +30,12 @@ pip install -r requirements.txt
 wandb login
 ```
 
+## supervised finetune
+python train.py
+
+## inference
+python chat.py
+
 ## start vllm server
 1. start server
 ```bash
