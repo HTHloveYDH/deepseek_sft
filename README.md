@@ -146,13 +146,12 @@ mv ./bin/llama-server ../
 
 **If you encounter any error in the build procedure, please reference the official doc [llama.cpp_build](https://github.com/ggml-org/llama.cpp/blob/master/docs/build.md)**
 
-### run following command
-```bash
-python ./merge_lora_quant_to_gguf.py --model_dir path/to/your/base_model_folder --lora_adapter_dir path/to/your/lora_adapter_folder --max_seq_length 32768 --torch_dtype auto --save_quant_model_dir /path/to/your/lora_mergerd_quant_model_folder --quantization_method q4_k_m
-```
-
-
 ## merge base model with lora adpater
 ```bash
 python merge_lora.py --model_dir /path/to/base_model --lora_adapter_dir /path/to/lora_adapter --max_seq_length 32768 --torch_dtype bfloat16 --save_model_dir /path/to/target_dir --save_method merged_16bit
+```
+
+## merge base model with lora adpater and quant to gguf format
+```bash
+python ./merge_lora_quant_to_gguf.py --model_dir path/to/your/base_model_folder --lora_adapter_dir path/to/your/lora_adapter_folder --max_seq_length 32768 --torch_dtype auto --save_quant_model_dir /path/to/your/lora_mergerd_quant_model_folder --quantization_method q4_k_m
 ```
