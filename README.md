@@ -72,6 +72,20 @@ curl http://localhost:9000/v1/chat/completions -H "Content-Type: application/jso
   }'
 ```
 
+## start sglang server
+1. start server
+```bash
+python -m sglang.launch_server --model /path/to/DeepSeek-R1-Distill-Qwen-32B --dp 1 --tp 1 ---nnodes 1 --do-att-prompt --trust-remote-code
+```
+
+2. access remote server by following command
+```bash
+curl http://localhost:9000/v1/chat/completions   -H "Content-Type: application/json"   -d '{
+    "model": "path/to/your/gguf_model.gguf",
+    "messages": [{"role": "user", "content": "Hello! What is your name?"}]
+  }'
+```
+
 ## start llama.cpp server
 1. start server
 ```bash
