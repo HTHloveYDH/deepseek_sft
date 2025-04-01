@@ -75,7 +75,7 @@ curl http://localhost:9000/v1/chat/completions -H "Content-Type: application/jso
 ## start sglang server
 1. start server
 ```bash
-python -m sglang.launch_server --model /path/to/DeepSeek-R1-Distill-Qwen-32B --dp 1 --tp 1 ---nnodes 1 --trust-remote-code
+python -m sglang.launch_server --model /path/to/DeepSeek-R1-Distill-Qwen-32B --dp 1 --tp 1 --nnodes 1 --trust-remote-code
 ```
 
 2. access remote server by following command
