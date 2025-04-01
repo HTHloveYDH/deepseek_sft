@@ -6,7 +6,7 @@ python hf_download.py --model deepseek-ai/DeepSeek-R1-Distill-Qwen-32B --save_di
 python hf_download.py --dataset FreedomIntelligence/medical-o1-reasoning-SFT --save_dir ./data
 ```
 
-## env config
+## training env config
 ```bash
 conda create -n deepseek python=3.12
 conda activate deepseek
@@ -23,6 +23,28 @@ pip install black
 or
 ```bash
 pip install -r requirements.txt
+```
+
+## vllm inference env config
+```bash
+conda create -n vllm python=3.12
+conda activate vllm
+
+pip install vllm==0.8.1
+pip install streamlit
+pip install isort
+pip install black
+```
+
+## sglang inference env config
+```bash
+conda create -n sglang python=3.12
+conda activate sglang
+
+pip install sglang[all]
+pip install streamlit
+pip install isort
+pip install black
 ```
 
 ## visulize training history
