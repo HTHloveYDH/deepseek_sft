@@ -15,7 +15,6 @@ pip install unsloth
 pip install --force-reinstall --no-cache-dir --no-deps git+https://github.com/unslothai/unsloth.git
 
 pip install vllm
-pip install sglang[all]
 pip install wandb
 pip install streamlit
 pip install isort
