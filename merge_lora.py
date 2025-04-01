@@ -32,7 +32,7 @@ def main(
     lora_model = PeftModel.from_pretrained(
         model,
         lora_adapter_dir,
-        torch_dtype=torch.float16,
+        torch_dtype=TORCH_TYPE_MAP.get(torch_dtype, None),
     )
 
     print("合并模型中...")
@@ -41,6 +41,11 @@ def main(
     print(f"保存合并模型到 {save_model_dir}...")
     # 使用标准的transformers保存方法而不是unsloth的方法
     if isinstance(merged_model, PreTrainedModel):
+        # optional 1#
+        # merged_model.save_pretrained_merged(save_model_dir, save_method=save_method, safe_serialization=True)
+        # print("模型保存成功!")
+        
+        # optional 2#
         merged_model.save_pretrained(save_model_dir, save_method=save_method, safe_serialization=True)
         tokenizer.save_pretrained(save_model_dir)
         print("模型保存成功!")
@@ -91,7 +96,7 @@ if __name__ == "__main__":
         "--save_method",
         type=str,
         required=True,
-        chioces=["merged_4bit", "merged_16bit", "lora"],
+        choices=["merged_4bit", "merged_16bit", "lora"],
         help="method to save the merged model",
     )
     

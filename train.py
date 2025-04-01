@@ -137,28 +137,12 @@ def main():
     )
 
     # start model training
-    trainer_stats = trainer.train(resume_from_checkpoint=train_config.resume_from_checkpoint)
+    trainer_stats = trainer.train(
+        resume_from_checkpoint=train_config.resume_from_checkpoint
+    )
 
     # model train stats
     wandb.finish()
-
-    """-------------------------------------- save model after SFT --------------------------------------"""
-    if train_config.save_lora_adapter:
-        model.save_pretrained(train_config.save_model_dir)
-        tokenizer.save_pretrained(train_config.save_model_dir)
-    else:
-        model.save_pretrained_merged(
-            train_config.save_model_dir,
-            tokenizer,
-            save_method=train_config.save_method,
-        )
-
-    """-------------------------------------- quant model after SFT --------------------------------------"""
-    model.save_pretrained_gguf(
-        train_config.save_quant_model_dir,
-        tokenizer,
-        train_config.quantization_method,
-    )
 
     """-------------------------------------- test after SFT --------------------------------------"""
     # model inference after finetuning
@@ -168,13 +152,13 @@ def main():
     what would cystometry most likely reveal about her residual volume and detrusor contractions?
     """
 
-    FastLanguageModel.for_inference(model_lora)  # Unsloth has 2x faster inference!
+    FastLanguageModel.for_inference(lora_model)  # Unsloth has 2x faster inference!
 
     inputs = tokenizer([chat_prompt_en.format(question, "")], return_tensors="pt").to(
         "cuda"
     )
 
-    outputs = model_lora.generate(
+    outputs = lora_model.generate(
         input_ids=inputs.input_ids,
         attention_mask=inputs.attention_mask,
         max_new_tokens=1200,
@@ -185,6 +169,19 @@ def main():
 
     print(response[0].split("### Response:")[1])
 
+    """-------------------------------------- save model after SFT --------------------------------------"""
+    lora_model.save_pretrained_merged(
+        train_config.save_model_dir,
+        tokenizer,
+        save_method=train_config.save_method,
+    )
+
+    """-------------------------------------- quant model after SFT --------------------------------------"""
+    lora_model.save_pretrained_gguf(
+        train_config.save_quant_model_dir,
+        tokenizer,
+        train_config.quantization_method,
+    )
 
 
 if __name__ == "__main__":

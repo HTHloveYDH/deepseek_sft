@@ -1,8 +1,15 @@
+"""
+2025.3.17
+2025.3.19
+4.50.0
+0.15.1
+__UNSLOTH_VERSIONING__
+"""
 from torch import Tensor
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
-from trl.trainer.sft_trainer import (Any, AutoModelForCausalLM, AutoTokenizer, BaseImageProcessor, Callable, ConstantLengthDataset, DataCollator, DataCollatorForLanguageModeling, Dataset, EvalPrediction, FeatureExtractionMixin, IterableDataset, Optional, PartialState, PeftConfig, PeftModel, PreTrainedModel, PreTrainedTokenizerBase, ProcessorMixin, SFTConfig, SFTTrainer, Trainer, TrainerCallback, TrainingArguments, Type, Union, dataclasses, defaultdict, deprecate_kwarg, generate_model_card, get_comet_experiment_url, get_peft_model, is_conversational, is_liger_kernel_available, is_peft_available, is_wandb_available, maybe_apply_chat_template, maybe_convert_to_chatml, nn, os, pack_examples, peft, peft_module_casting_to_bf16, prepare_model_for_kbit_training, torch, transformers, version, wandb, warnings, os)
+from trl.trainer.sft_trainer import (Any, AutoModelForCausalLM, AutoTokenizer, BaseImageProcessor, Callable, ConstantLengthDataset, DataCollator, DataCollatorForLanguageModeling, Dataset, EvalPrediction, FeatureExtractionMixin, IterableDataset, Optional, PeftConfig, PeftModel, PreTrainedModel, PreTrainedTokenizerBase, ProcessorMixin, SFTConfig, SFTTrainer, Trainer, TrainerCallback, TrainingArguments, Type, Union, dataclasses, defaultdict, deprecate_kwarg, generate_model_card, get_comet_experiment_url, get_peft_model, is_liger_kernel_available, is_peft_available, is_wandb_available, nn, os, pack_examples, peft, peft_module_casting_to_bf16, prepare_model_for_kbit_training, torch, transformers, version, wandb, warnings, Callable, ConstantLengthDataset, DataCollator, DataCollatorForLanguageModeling, Dataset, IterableDataset, Optional, Union, os, pack_examples, transformers, os)
 
 
 import os
@@ -13,6 +20,8 @@ import torch
 import numpy as np
 from contextlib import nullcontext
 from torch.nn import functional as F
+from transformers import DataCollatorForSeq2Seq, DataCollatorForLanguageModeling
+
 torch_compile_options = {
     "epilogue_fusion"   : True,
     "max_autotune"      : False,
@@ -164,6 +173,7 @@ class UnslothSFTConfig(SFTConfig):
         fsdp = '',
         fsdp_min_num_params = 0,
         fsdp_config = None,
+        tp_size = 0,
         fsdp_transformer_layer_cls_to_wrap = None,
         accelerator_config = None,
         deepspeed = None,
@@ -222,7 +232,7 @@ class UnslothSFTConfig(SFTConfig):
         dataset_text_field = 'text',
         dataset_kwargs = None,
         dataset_num_proc = None,
-        max_seq_length = 1024,
+        max_seq_length = None,
         packing = False,
         eval_packing = None,
         dataset_batch_size = None,
@@ -318,6 +328,7 @@ class UnslothSFTConfig(SFTConfig):
             fsdp = fsdp,
             fsdp_min_num_params = fsdp_min_num_params,
             fsdp_config = fsdp_config,
+            tp_size = tp_size,
             fsdp_transformer_layer_cls_to_wrap = fsdp_transformer_layer_cls_to_wrap,
             accelerator_config = accelerator_config,
             deepspeed = deepspeed,
@@ -612,106 +623,134 @@ class _UnslothSFTTrainer(Trainer):
     def _prepare_dataset(
         self,
         dataset: Union[Dataset, IterableDataset],
-        processing_class: Union[PreTrainedTokenizerBase, BaseImageProcessor, FeatureExtractionMixin, ProcessorMixin],
-        args: SFTConfig,
+        processing_class,
+        args,
         packing: bool,
         formatting_func: Optional[Callable[[dict], str]],
         dataset_name: str,
     ) -> Union[Dataset, IterableDataset]:
-        # Convert the dataset to an IterableDataset if it is a ConstantLengthDataset
-        if isinstance(dataset, ConstantLengthDataset):
-            return dataset
-
-        # If the dataset is already preprocessed (tokenized), skip the processing steps.
-        column_names = list(next(iter(dataset)).keys())
-        is_processed = "input_ids" in column_names
-
-        # Build the kwargs for the `map` function
+        # All Unsloth Zoo code licensed under LGPLv3
+        if isinstance(dataset, ConstantLengthDataset): return dataset
+    
         map_kwargs = {}
-        if isinstance(dataset, Dataset):  # IterableDataset does not support num_proc
-            map_kwargs["num_proc"] = args.dataset_num_proc
-
-        with PartialState().local_main_process_first():
-            # Apply the formatting function if any
-            if formatting_func is not None and is_processed:
-                warnings.warn(
-                    "You passed a dataset that is already processed (contains an `input_ids` field) together with a "
-                    "formatting function. Therefore `formatting_func` will be ignored. Either remove the "
-                    "`formatting_func` or pass a dataset that is not already processed.",
-                    UserWarning,
+        use_desc = isinstance(dataset, Dataset)
+        is_vlm = hasattr(processing_class, "tokenizer")
+        tokenizer = processing_class
+        if is_vlm: tokenizer = processing_class.tokenizer
+    
+        # Get max length
+        max_seq_length = getattr(args, "max_length", 0)
+        if max_seq_length == 0: max_seq_length = getattr(args, "max_seq_length", 0)
+        if max_seq_length == 0: max_seq_length = getattr(self, "max_seq_length", 0)
+        if max_seq_length == 0: max_seq_length = getattr(self, "max_seq", 0)
+        if max_seq_length == 0: raise RuntimeError("Unsloth: max_seq_length is 0! Please specify one!")
+        dataset_text_field = getattr(args, "dataset_text_field", "text")
+        do_truncation = max_seq_length != 0
+        do_formatting_func = False
+        do_tokenize = True
+    
+        # Get correct column names
+        column_names = set(next(iter(dataset)).keys())
+        used_column_names = ["input_ids"]
+        if "attention_mask" in column_names:
+            used_column_names.append("attention_mask")
+    
+        # Check if already tokenized so skip
+        from transformers import DataCollatorForSeq2Seq, DataCollatorForLanguageModeling
+        if "labels" in column_names:
+            # Most likely forgot data collator!
+            if is_vlm and not hasattr(tokenizer, "pad"):
+                # Check if processing_class has a .pad, if not, use tokenizer.tokenizer
+                raise RuntimeError(f"Unsloth: {processing_class.__class__} does not have .pad!")
+            self.data_collator = DataCollatorForSeq2Seq(tokenizer)
+            used_column_names.append("labels")
+            do_tokenize = False
+        elif "input_ids" in column_names:
+            # Skip dataset prep, and set data collator
+            if is_vlm and not hasattr(tokenizer, "pad"):
+                # Check if processing_class has a .pad, if not, use tokenizer.tokenizer
+                raise RuntimeError(f"Unsloth: {processing_class.__class__} does not have .pad!")
+            self.data_collator = DataCollatorForLanguageModeling(tokenizer, mlm = False)
+            do_tokenize = False
+        elif dataset_text_field not in column_names:
+            do_formatting_func = True
+            if formatting_func is None:
+                raise RuntimeError("Unsloth: You must specify a `formatting_func`")
+        pass
+    
+        if do_tokenize:
+            # Check double BOS tokens
+            if do_formatting_func:
+                test_text = formatting_func(next(iter(dataset)))
+                if not isinstance(test_text, list):
+                    raise ValueError(
+                        "Unsloth: The `formatting_func` should return a list of processed strings."
+                    )
+                test_text = test_text[0]
+            else:
+                test_text = next(iter(dataset))[dataset_text_field][0]
+    
+            # Get chat template
+            chat_template = getattr(processing_class, 'chat_template', '')
+            if chat_template == '' and is_vlm:
+                chat_template = getattr(tokenizer, 'chat_template', '')
+            if chat_template is None:
+                chat_template = ''
+    
+            # Get bos_token
+            add_special_tokens = True
+            bos_token_1 = getattr(processing_class, 'bos_token', None)
+            bos_token_2 = getattr(tokenizer, 'bos_token', None)
+            bos_token = bos_token_1 or bos_token_2
+    
+            if bos_token is not None:
+                if test_text.startswith(bos_token) or bos_token in chat_template:
+                    add_special_tokens = False
+                    print("Unsloth: We found double BOS tokens - we shall remove one automatically.")
+            pass
+    
+            # Create tokenize function
+            def _tokenize(example):
+                return tokenizer(
+                    example[dataset_text_field] if not do_formatting_func else formatting_func(example),
+                    truncation = do_truncation,
+                    max_length = max_seq_length,
+                    return_token_type_ids = False,
+                    add_special_tokens = add_special_tokens,
                 )
-
-            if formatting_func is not None and not is_processed:
-                if isinstance(dataset, Dataset):  # `IterableDataset.map` does not support `desc`
-                    map_kwargs["desc"] = f"Applying formatting function to {dataset_name} dataset"
-
-                batched = isinstance(formatting_func(next(iter(dataset))), list)
-
-                def _func(example):
-                    return {"text": formatting_func(example)}
-
-                dataset = dataset.map(_func, batched=batched, **map_kwargs)
-
-            # If the dataset is prompt-completion, convert it to language modeling type
-            if "prompt" in dataset.column_names and "completion" in dataset.column_names:
-                key = "messages" if is_conversational(dataset[0]) else "text"
-
-                def concat_prompt_completion(example):
-                    return {key: example["prompt"] + example["completion"]}
-
-                dataset = dataset.map(concat_prompt_completion, remove_columns=["prompt", "completion"])
-
-            # Convert the dataset to ChatML if needed
-            if isinstance(dataset, Dataset):  # `IterableDataset.map` does not support `desc`
-                map_kwargs["desc"] = f"Converting {dataset_name} dataset to ChatML"
-            dataset = dataset.map(
-                maybe_convert_to_chatml,
-                remove_columns="conversations" if "conversations" in dataset.column_names else None,
+            pass
+    
+            if not isinstance(dataset, IterableDataset):
+                map_kwargs["num_proc"] = getattr(args, "dataset_num_proc", 2)
+            else:
+                map_kwargs["batch_size"] = dataset._ex_iterable.batch_size
+                
+            if use_desc: map_kwargs["desc"] = f'Unsloth: Tokenizing ["{dataset_text_field}"]'
+            dataset = dataset.map(_tokenize, batched = True, **map_kwargs)
+    
+            # If VLM, switch data collator since .pad is needed!
+            if is_vlm and not hasattr(processing_class, "pad"):
+                data_collator = DataCollatorForLanguageModeling(tokenizer, mlm = False)
+                self.data_collator = data_collator
+            pass
+        pass
+        if packing:
+            print("Unsloth: Hugging Face's packing is currently buggy - we're disabling it for now!")
+            return dataset
+    
+            if max_seq_length == 0:
+                raise ValueError("When packing is enabled, `max_seq_length` can't be `None`.")
+    
+            if use_desc: map_kwargs["desc"] = f"Unsloth: Packing {dataset_name} dataset"
+            dataset = dataset.select_columns(used_column_names).map(
+                pack_examples,
+                batched = True,
+                fn_kwargs = {"seq_length": max_seq_length,},
                 **map_kwargs,
             )
-
-            # Apply the chat template if needed
-            if isinstance(dataset, Dataset):  # `IterableDataset.map` does not support `desc`
-                map_kwargs["desc"] = f"Applying chat template to {dataset_name} dataset"
-            dataset = dataset.map(
-                maybe_apply_chat_template,
-                fn_kwargs={"tokenizer": processing_class},
-                remove_columns="messages" if "messages" in dataset.column_names else None,  # renamed to "text"
-                **map_kwargs,
-            )
-
-            # Tokenize the dataset if needed
-            if not is_processed:
-                if isinstance(dataset, Dataset):  # `IterableDataset.map` does not support `desc`
-                    map_kwargs["desc"] = f"Tokenizing {dataset_name} dataset"
-
-                def tokenize(ex):
-                    tokenized = processing_class(ex[args.dataset_text_field])
-                    return {"input_ids": tokenized["input_ids"], "attention_mask": tokenized["attention_mask"]}
-
-                dataset = dataset.map(tokenize, **map_kwargs)
-
-            # Pack or truncate
-            if packing:
-                if args.max_seq_length is None:
-                    raise ValueError("When packing is enabled, `max_seq_length` can't be `None`.")
-                if isinstance(dataset, Dataset):  # `IterableDataset.map` does not support `desc`
-                    map_kwargs["desc"] = f"Packing {dataset_name} dataset"
-                dataset = dataset.select_columns("input_ids")
-                dataset = dataset.map(
-                    pack_examples, batched=True, fn_kwargs={"seq_length": args.max_seq_length}, **map_kwargs
-                )
-            elif args.max_seq_length is not None:
-                dataset = dataset.map(
-                    lambda ex: {key: ex[key][: args.max_seq_length] for key in ["input_ids", "attention_mask"]},
-                    **map_kwargs,
-                )
-            # For Liger kernel, ensure only input_ids is present
-            if args.use_liger:
-                dataset = dataset.select_columns("input_ids")
-
+        pass
         return dataset
-
+    
     def compute_loss(self, model, inputs, return_outputs = False, num_items_in_batch = None):
         outputs = super().compute_loss(
             model,
@@ -876,14 +915,23 @@ class UnslothSFTTrainer(_UnslothSFTTrainer):
         if args is None: args = UnslothSFTConfig()
         use_bf16 = getattr(args, 'bf16', False)
         use_fp16 = getattr(args, 'fp16', False)
+        force_float32 = False
+        if os.environ.get('UNSLOTH_FORCE_FLOAT32', '0') == '1':
+            print('Unsloth: Switching to float32 training since model cannot work with float16')
+            force_float32 = True
+        mixed_precision_dtype = os.environ.get('UNSLOTH_MIXED_PRECISION', 'float32')
         dtype = getattr(model.config, 'torch_dtype', None)
         if dtype is None: dtype = model.get_input_embeddings().dtype
         from unsloth_zoo.utils import _get_dtype
         dtype = _get_dtype(dtype)
         float16 = dtype == torch.float16
-        if float16 and use_bf16: raise TypeError('Unsloth: Model is in float16 precision but you want to use bfloat16 precision. Set fp16 to `True` and bf16 to `False`')
-        if not float16 and use_fp16: raise TypeError('Unsloth: Model is in bfloat16 precision but you want to use float16 precision. Set fp16 to `False` and bf16 to `True`')
-        if not use_bf16 and not use_fp16:
+        if not force_float32 and (float16 and use_bf16): raise TypeError('Unsloth: Model is in float16 precision but you want to use bfloat16 precision. Set fp16 to `True` and bf16 to `False`')
+        if not force_float32 and (not float16 and use_fp16): raise TypeError('Unsloth: Model is in bfloat16 precision but you want to use float16 precision. Set fp16 to `False` and bf16 to `True`')
+        if force_float32:
+            args.fp16 = False
+            args.bf16 = False
+            os.environ['ACCELERATE_MIXED_PRECISION'] = 'no'
+        elif (not use_bf16 and not use_fp16) and mixed_precision_dtype == 'float32':
             args.fp16 = float16
             args.bf16 = not float16
             os.environ['ACCELERATE_MIXED_PRECISION'] = 'fp16' if float16 else 'bf16'
@@ -904,7 +952,20 @@ class UnslothSFTTrainer(_UnslothSFTTrainer):
         bf16_full_eval = getattr(args, 'bf16_full_eval', False)
         if args.fp16 and bf16_full_eval: args.bf16_full_eval = False; args.fp16_full_eval = True
         if args.bf16 and fp16_full_eval: args.bf16_full_eval = True; args.fp16_full_eval = False
-        if not bf16_full_eval and not fp16_full_eval: args.bf16_full_eval = args.bf16; args.fp16_full_eval = args.fp16
+        if force_float32:
+            args.bf16_full_eval = False
+            args.fp16_full_eval = False
+        elif os.environ.get('UNSLOTH_MIXED_PRECISION', 'float32') == 'bfloat16':
+            args.bf16_full_eval = True
+            args.fp16_full_eval = False
+        elif not bf16_full_eval and not fp16_full_eval:
+            args.bf16_full_eval = args.bf16
+            args.fp16_full_eval = args.fp16
+        _output_logits = False
+        if locals().get('compute_metrics', None) is not None: _output_logits = True
+        if locals().get('preprocess_logits_for_metrics', None) is not None: _output_logits = True
+        if _output_logits:
+            os.environ['UNSLOTH_RETURN_LOGITS'] = '1'
         if 'max_seq_length' not in locals() and not hasattr(args, 'max_seq_length'):
             pass
         else:
@@ -919,6 +980,23 @@ class UnslothSFTTrainer(_UnslothSFTTrainer):
         if 'processing_class' in locals():
             if hasattr(processing_class, 'padding_side'): processing_class.padding_side = 'right'
             if hasattr(processing_class, 'tokenizer') and hasattr(processing_class.tokenizer, 'padding_side'): processing_class.tokenizer.padding_side = 'right'
+        __tokenizer = processing_class if 'processing_class' in locals() else tokenizer
+        from unsloth_zoo.vision_utils import UnslothVisionDataCollator
+        if not isinstance(data_collator, UnslothVisionDataCollator):
+            if isinstance(data_collator, DataCollatorForSeq2Seq) and 'labels' not in train_dataset.column_names:
+                data_collator = DataCollatorForLanguageModeling(__tokenizer, mlm = False)
+            elif isinstance(data_collator, DataCollatorForLanguageModeling) and 'labels' in train_dataset.column_names:
+                data_collator = DataCollatorForSeq2Seq(__tokenizer)
+        else:
+            if hasattr(args, 'remove_unused_columns'): args.remove_unused_columns = False
+            if hasattr(args, 'dataset_text_field'): args.dataset_text_field = ''
+            if hasattr(args, 'dataset_kwargs'): args.dataset_kwargs = {'skip_prepare_dataset': True}
+        if not isinstance(data_collator, UnslothVisionDataCollator):
+            if not hasattr(__tokenizer, 'pad') and hasattr(__tokenizer, 'tokenizer'):
+                if isinstance(data_collator, DataCollatorForSeq2Seq):
+                    data_collator = DataCollatorForSeq2Seq(__tokenizer.tokenizer)
+                else:
+                    data_collator = DataCollatorForLanguageModeling(__tokenizer.tokenizer, mlm = False)
         other_metrics = []
         
         from unsloth_zoo.logging_utils import PatchRLStatistics

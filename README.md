@@ -75,7 +75,7 @@ curl http://localhost:9000/v1/chat/completions -H "Content-Type: application/jso
 ## start sglang server
 1. start server
 ```bash
-python -m sglang.launch_server --model /path/to/DeepSeek-R1-Distill-Qwen-32B --dp 1 --tp 1 ---nnodes 1 --do-att-prompt --trust-remote-code
+python -m sglang.launch_server --model /path/to/DeepSeek-R1-Distill-Qwen-32B --dp 1 --tp 1 ---nnodes 1 --trust-remote-code
 ```
 
 2. access remote server by following command
@@ -149,4 +149,10 @@ mv ./bin/llama-server ../
 ### run following command
 ```bash
 python ./merge_lora_quant_to_gguf.py --model_dir path/to/your/base_model_folder --lora_adapter_dir path/to/your/lora_adapter_folder --max_seq_length 32768 --torch_dtype auto --save_quant_model_dir /path/to/your/lora_mergerd_quant_model_folder --quantization_method q4_k_m
+```
+
+
+## merge base model with lora adpater
+```bash
+python merge_lora.py --model_dir /path/to/base_model --lora_adapter_dir /path/to/lora_adapter --max_seq_length 32768 --torch_dtype bfloat16 --save_model_dir /path/to/target_dir --save_method merged_16bit
 ```

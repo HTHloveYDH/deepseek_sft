@@ -8,7 +8,6 @@ class TrainConfig:  # total=True as default
     save_model_dir: str
     save_quant_model_dir: str
     data_dir: str
-    save_lora_adapter: bool = True
     save_method: Literal["merged_16bit", "merged_4bit", "lora"] = "merged_16bit"
 
     quantization_method: Literal[

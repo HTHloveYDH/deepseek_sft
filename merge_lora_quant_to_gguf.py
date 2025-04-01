@@ -30,7 +30,7 @@ def main(
     lora_model = PeftModel.from_pretrained(
         model,
         lora_adapter_dir,
-        torch_dtype=torch.float16,
+        torch_dtype=TORCH_TYPE_MAP.get(torch_dtype, None),
     )
 
     print("合并模型中...")

@@ -3,7 +3,6 @@
     "model_dir": "../models/DeepSeek-R1-Distill-Qwen-32B",
     "save_model_dir": "./models/DeepSeek-R1-Distill-Qwen-32B-Medical",
     "save_quant_model_dir": "./models/DeepSeek-R1-Distill-Qwen-32B-Medical-Quant",
-    "save_lora_adapter": true,
     "save_method": "merged_16bit",
 
     "quantization_method": "q4_k_m",
